@@ -1,0 +1,226 @@
+﻿<div class="container">
+
+        <center><h3>Food Item Details</h3></center>
+        <div class="col-md">
+                <form class="form-inline">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-12">
+                            <label for="name">Food Name: </label>
+                            <input class="form-control" id="name" type="text" /> <br />
+                        </div>
+                        <div class="col-md-3 col-sm-12">
+                            <label for="quantity">Quantity: </label>
+                            <input class="form-control" id="quantity" type="text" /><br />
+                        </div>
+                        <div class="col-md-3 col-sm-12">
+                            <label for="price">Price</label>
+                            <input class="form-control" id="price" type="number" />
+                        </div>
+                        <div class="col-md-3 col-sm-12">
+                            <label for="expire">Expire: </label>
+                            <input class="form-control" id="expire" type="date" />
+                        </div>
+                        <div class="col-md-3 col-sm-12">
+                            <input class="btn btn-secondary" type="button" id="insert" value="Insert" onclick='AddFood(this)' />
+                        </div>
+                    </div>
+                </form>   
+        </div>
+        <br />
+        
+            <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover" id="FoodTable" style="width: 900px">
+                <thead>
+                    <tr>
+                        <th> Food Name </th>
+                        <th> Quantity </th>
+                        <th> Price </th>
+                        <th> Expire Date</th>
+                        <th width="200px"></th>
+                    </tr>
+                </thead>
+            </table>
+            </div>
+     
+    </div>
+    <br />
+    <div id="msg"></div>
+    <!-- Optional JavaScript -->
+
+    <script>
+
+        // Food structure to store and save data
+        var Food = {
+            Id: 0,
+            Name: "",
+            Quantity: "",
+            Price: 0,
+            Expire: "2-19-2021"
+        }
+
+
+        $(document).ready(function () {
+            fetchFoodList();
+        });
+
+       
+
+
+        // show all the Foods data
+        function ShowFoodItems(FoodItems) {
+            // Iterate over the collection of data
+            $("#FoodTable tbody").remove();
+
+            $.each(FoodItems, function (index, fooditem) {
+
+                // Add new row to the FoodTable
+                AddRow(fooditem);
+            });
+        }
+
+        // Add a row to the FoodTable
+        function AddRow(fooditem) {
+
+            // check if a <tbody> tag exists
+
+            if ($("#FoodTable tbody").length == 0) {
+
+                // add one if not
+                $("#FoodTable").append("<tbody></tbody>");
+            }
+
+            // Append row
+            $("#FoodTable tbody").append(
+                ConstructTableBody(fooditem));
+        }
+
+        // construct Table body
+        function ConstructTableBody(fooditem) {
+            // slicing date ending time T000000
+            fooditem.Expire = fooditem.Expire.slice(0, -9)
+            // building row for table 
+            var tblRow = "<tr>" +
+                                "<td><input   class='name form-control' type='text' value='" + fooditem.Name + "'/></td>" +
+                                "<td><input  class='quantity form-control'  type='text' value='" + fooditem.Quantity + "'/></td>" +
+                                "<td><input  class='price form-control' type='number' value='" + fooditem.Price + "'/></td>" +
+                                "<td><input  class='expire form-control' type='date' value='" + fooditem.Expire + "'/></td>" +
+                                "<td>" +"<button type='button' "+"onclick='FoodUpdate(this);' "+"class='btn btn-warning' "+"data-id='"+fooditem.Id + "' "+"data-name='" + fooditem.Name + "' "+"data-quantity='"+fooditem.Quantity+"' "+"data-price='"+fooditem.Price+"' "+"data-expire='" + fooditem.Expire + "' " +">" +"Change" +
+                                        "</button> " +" <button type='button' " +"onclick='FoodDelete(this);'" +"class='btn btn-danger' " +"data-id='" + fooditem.Id + "'>" +"Del" +"</button>" +"</td>" +
+                        "</tr>";
+
+            return tblRow;
+        }
+        // to  add new Food
+        function AddFood(item) {
+            var optionsAjax = {};
+            optionsAjax.url = "/api/Foods";
+            optionsAjax.type = "POST";
+            var foodstruct = Food;
+            foodstruct.Name = $("#name").val();
+            foodstruct.Quantity = $("#quantity").val();
+            foodstruct.Price = $('#price').val();
+
+            // get expre date
+            var date = new Date($('#expire').val());
+            var day = date.getDate();
+            var month = date.getMonth() + 1;
+            var year = date.getFullYear();
+            foodstruct.Expire = [month, day, year].join('-');
+           
+            optionsAjax.contentType = "application/json";
+            optionsAjax.dataType = "html";
+            optionsAjax.data = JSON.stringify(foodstruct);
+            optionsAjax.success = function (msg) {
+                // update list
+                fetchFoodList();
+                // show message
+                $("#msg").html("Food Added Successfully");
+            },
+                optionsAjax.error = function () {
+                    $("#msg").html("add food error");
+                };
+            $.ajax(optionsAjax);
+        }
+
+        // to update Food data
+        function FoodUpdate(item) {
+            var id = $(item).data("id");
+            var optionsAjax = {};
+            optionsAjax.url = "/api/Foods/" + id
+            optionsAjax.type = "PUT";
+
+            var foodstruct = Food;
+            foodstruct.Id = $(item).data("id");
+            foodstruct.Name = $(".name", $(item).parent().parent()).val();
+            foodstruct.Quantity = $(".quantity", $(item).parent().parent()).val();
+            foodstruct.Price = $(".price", $(item).parent().parent()).val();
+            // get expre date
+            var date = new Date($(".expire", $(item).parent().parent()).val());
+            var day = date.getDate();
+            var month = date.getMonth() + 1;
+            var year = date.getFullYear();
+            foodstruct.Expire = [month, day, year].join('-');
+
+            optionsAjax.contentType = "application/json";
+            optionsAjax.dataType = "html";
+            optionsAjax.data = JSON.stringify(foodstruct);
+            optionsAjax.success = function (msg) {
+                $("#msg").html("Food item updated successfully");
+            };
+            optionsAjax.error = function () {
+                $("#msg").html("Food Update Error!");
+            };
+            $.ajax(optionsAjax);
+        }
+
+        // to delete Food data
+        function FoodDelete(item) {
+            var id = $(item).data("id");
+            var optionsAjax = {};
+            optionsAjax.url = "/api/Foods/"
+                + id;
+            optionsAjax.type = "DELETE";
+            optionsAjax.dataType = "html";
+            optionsAjax.success = function (msg) {
+
+                $("#msg").html("Food Item deleted Successfully");
+                fetchFoodList();
+            };
+            optionsAjax.error = function () {
+                $("#msg").html("food delete error");
+            };
+            $.ajax(optionsAjax);
+        }
+
+
+
+
+        //fetch all the Foods data from API
+        function fetchFoodList() {
+            // Calling API AJX
+            $.ajax({
+                url: '/api/Foods/',
+                type: 'GET',
+                dataType: 'json',
+                success: function (FoodItems) {
+                    ShowFoodItems(FoodItems);
+                },
+                error: function (request, message, error) {
+                    OnError(request, message, error);
+                }
+            });
+        }
+        // When error occurs this functon acts
+        function OnError(request, message, error) {
+            var msg = "";
+            msg += "Code: " + request.status + "\n";
+            msg += "Text: " + request.statusText + "\n";
+            if (request.responseJSON != null) {
+                msg += "Message" + request.responseJSON.Message + "\n";
+            }
+
+            alert(msg);
+        }
+
+
+    </script>
